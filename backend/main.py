@@ -22,6 +22,9 @@ API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_API_URL", "https://openrouter.ai/api/v1")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+import os
+print("SUPABASE_URL:", os.getenv("SUPABASE_URL"))
+print("SUPABASE_KEY:", os.getenv("SUPABASE_KEY"))
 
 # Initialize FastAPI App
 app = FastAPI()
@@ -60,6 +63,33 @@ class CourseSelection(BaseModel):
     user_id: int
     selected_courses: list[str]
 
+@app.get("/test_supabase")
+async def test_supabase():
+    try:
+        response = supabase.table("course_ts").select("*").limit(1).execute()
+        return {"success": True, "data": response.data}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/user_selected_courses/{user_id}")
+async def get_user_selected_courses(user_id: int):
+    """Retrieve selected courses for a given user."""
+    try:
+        response = supabase.table("user_subject_sel").select("selected_subjects").eq("id", user_id).execute()
+        
+        print("Fetched courses:", response)  # Debugging line
+        
+        if not response.data or not response.data[0]["selected_subjects"]:  # Fix null check
+            return {"user_id": user_id, "selected_courses": []}  # ✅ Return empty list instead of error
+
+        selected_courses = response.data[0]["selected_subjects"].split(", ") if response.data[0]["selected_subjects"] else []
+        return {"user_id": user_id, "selected_courses": selected_courses}
+
+    except Exception as e:
+        logging.error(f"Error fetching selected courses: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @app.get("/career_recommendation")
@@ -81,24 +111,30 @@ async def get_career_recommendations(username: str = Query(..., description="Use
 async def get_courses():
     try:
         response = supabase.table("course_ts").select("course_id, course_name").execute()
+       
         if not response.data:
             raise HTTPException(status_code=404, detail="No courses found")
         
-        return response.data  # Returns a list of courses
+        return response.data  # ✅ Ensure response includes course_id
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
     
 
 @app.post("/save_selected_courses")
 async def save_selected_courses(course_selection: CourseSelection):
-    """Save selected course names for a user in user_subject_sel."""
+    """Save or update selected course names for a user in user_subject_sel."""
     try:
         user_id = course_selection.user_id
         selected_courses = course_selection.selected_courses
-
+        print(user_id)
+        print(selected_courses)
 
         # Fetch username based on user_id
         user_data = supabase.table("users").select("username").eq("id", user_id).execute()
+        print("User data:",user_data)
+
         if not user_data.data:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -107,11 +143,14 @@ async def save_selected_courses(course_selection: CourseSelection):
         # 🔥 Convert list of selected courses into a comma-separated string
         courses_str = ", ".join(selected_courses)
 
-        response = supabase.table("user_subject_sel").insert({
-            "id": user_id,
+        # 🔄 Use upsert instead of insert to avoid duplicate key errors
+        response = supabase.table("user_subject_sel").upsert({
+            "id": user_id,  # Primary key
             "username": username,
-            "selected_subjects": courses_str  # 🔥 Storing course_name
+            "selected_subjects": courses_str  # 🔥 Storing course names
         }).execute()
+
+        print("response:", response)
 
         if response.data:
             return {"message": "Courses saved successfully"}
@@ -121,6 +160,7 @@ async def save_selected_courses(course_selection: CourseSelection):
     except Exception as e:
         logging.error(f"Error saving selected courses: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/auth/register")
 async def register(user: UserCreate = Body(...)):
     try:
