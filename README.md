@@ -74,10 +74,6 @@ This project is an **AI-powered educational assistant** that adapts responses ba
    uvicorn main:app --reload
    ```
 
-## **👨‍💻 Contributors**
-- **[Your Name]** → NLP & Backend Development
-- **[Teammate's Name]** → Frontend & UI/UX
-
 ---
 📢 *For any questions or contributions, feel free to reach out!* 🚀
 
