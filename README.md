@@ -50,9 +50,10 @@ This project is an **AI-powered educational assistant** that adapts responses ba
 | `POST` | `/upload/` | Upload file for AI-based Q&A |
 
 **DEMO**
-the below one is without tailoring to thinking styles
-![Survey UI](withts.png)
 the below one is tailored to concrete thinking styles which relates with real time examples
+![Survey UI](withts.png)
+![Survey UI](pca.png)
+the below one is without tailoring to thinking styles
 ![Survey UI](withoutts.png)
 ## **📈 Future Improvements**
 - **🔄 Replace OpenRouter API classification** with our own **fine-tuned model**
