@@ -49,6 +49,9 @@ This project is an **AI-powered educational assistant** that adapts responses ba
 | `POST` | `/chat/` | AI chatbot response based on user’s message |
 | `POST` | `/upload/` | Upload file for AI-based Q&A |
 
+**DEMO**
+![Survey UI](with-ts.png)
+
 ## **📈 Future Improvements**
 - **🔄 Replace OpenRouter API classification** with our own **fine-tuned model**
 - **📊 Improve Thinking Style Model Accuracy** using better labeled data
